@@ -4,24 +4,41 @@ import api from '../api/axios';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [step, setStep] = useState('phone'); // 'phone' or 'otp'
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/api/auth/login', form);
-      localStorage.setItem('token', res.data.token);
+      await api.post('/api/auth/send-otp', { phone });
+      setStep('otp');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send OTP.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.post('/api/auth/verify-otp', {
+        phone,
+        code: otp,
+        deviceId: 'web',
+        consentGiven: true,
+      });
+      localStorage.setItem('token', res.data.data.token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Try again.');
+      setError(err.response?.data?.message || 'Invalid OTP. Try again.');
     } finally {
       setLoading(false);
     }
@@ -31,43 +48,57 @@ export default function Login() {
     <div style={styles.container}>
       <div style={styles.card}>
         <h1 style={styles.title}>Smart Ad+</h1>
-        <p style={styles.subtitle}>Sign in to your account</p>
+        <p style={styles.subtitle}>
+          {step === 'phone' ? 'Enter your phone number' : `Enter the OTP sent to ${phone}`}
+        </p>
 
         {error && <div style={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit}>
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              style={styles.input}
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              style={styles.input}
-              type="password"
-              name="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <button style={styles.button} type="submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+        {step === 'phone' ? (
+          <form onSubmit={handleSendOtp}>
+            <div style={styles.field}>
+              <label style={styles.label}>Phone Number</label>
+              <input
+                style={styles.input}
+                type="tel"
+                placeholder="+1234567890"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </div>
+            <button style={styles.button} type="submit" disabled={loading}>
+              {loading ? 'Sending OTP...' : 'Send OTP'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOtp}>
+            <div style={styles.field}>
+              <label style={styles.label}>OTP Code</label>
+              <input
+                style={styles.input}
+                type="text"
+                placeholder="123456"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+              />
+            </div>
+            <button style={styles.button} type="submit" disabled={loading}>
+              {loading ? 'Verifying...' : 'Verify OTP'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep('phone')}
+              style={{ ...styles.button, background: 'transparent', border: '1px solid #334155', marginTop: '0.5rem' }}
+            >
+              ← Change Number
+            </button>
+          </form>
+        )}
 
         <p style={styles.footer}>
-          Don't have an account?{' '}
-          <Link to="/register" style={styles.link}>Register</Link>
+          New here? <Link to="/register" style={styles.link}>Create account</Link>
         </p>
       </div>
     </div>
