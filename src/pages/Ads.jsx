@@ -18,7 +18,7 @@ export default function Ads() {
 
   const fetchAds = async () => {
     try {
-      const res = await api.get('/api/ads');
+  const res = await api.get('/api/advertiser/ads');
       setAds(res.data.ads || res.data);
     } catch (err) {
       console.error('Failed to load ads', err);
@@ -36,7 +36,7 @@ export default function Ads() {
     setSubmitting(true);
     setError('');
     try {
-      await api.post('/api/ads', form);
+    await api.post('/api/advertiser/createAd', form);
       setForm({ title: '', description: '', budget: '', targetUrl: '' });
       setShowForm(false);
       fetchAds();
