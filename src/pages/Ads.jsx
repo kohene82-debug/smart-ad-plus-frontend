@@ -8,7 +8,16 @@ export default function Ads() {
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', budget: '', targetUrl: '' });
+  cconst [form, setForm] = useState({ title: '', description: '', budget: '', targetUrl: '', mediaUrl: '' });onst [form, setForm] = useState({ title: '', description: '', budget: '', targetUrl: '' });<div style={styles.field}>
+  <label style={styles.label}>Media URL (Image or Video link)</label>
+  <input
+    style={styles.input}
+    name="mediaUrl"
+    placeholder="https://example.com/image.jpg"
+    value={form.mediaUrl}
+    onChange={handleChange}
+  />
+</div>
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
