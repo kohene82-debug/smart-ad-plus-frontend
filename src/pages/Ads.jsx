@@ -10,6 +10,8 @@ export default function Ads() {
   const [form, setForm] = useState({ title: '', description: '', budget: '', targetUrl: '', mediaUrl: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [uploadPreview, setUploadPreview] = useState(null);
+  const [uploadType, setUploadType] = useState(null);
 
   useEffect(() => {
     fetchAds();
@@ -30,6 +32,19 @@ export default function Ads() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const isVideo = file.type.startsWith('video/');
+    setUploadType(isVideo ? 'video' : 'image');
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm({ ...form, mediaUrl: reader.result });
+      setUploadPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -37,6 +52,8 @@ export default function Ads() {
     try {
       await api.post('/api/advertiser/createAd', form);
       setForm({ title: '', description: '', budget: '', targetUrl: '', mediaUrl: '' });
+      setUploadPreview(null);
+      setUploadType(null);
       setShowForm(false);
       fetchAds();
     } catch (err) {
@@ -104,8 +121,23 @@ export default function Ads() {
                 <input style={styles.input} name="targetUrl" placeholder="https://yoursite.com" value={form.targetUrl} onChange={handleChange} required />
               </div>
               <div style={styles.field}>
-                <label style={styles.label}>Media URL (Image or Video link)</label>
-                <input style={styles.input} name="mediaUrl" placeholder="https://example.com/image.jpg" value={form.mediaUrl} onChange={handleChange} />
+                <label style={styles.label}>Upload Image or Video</label>
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleFileChange}
+                  style={{ ...styles.input, padding: '0.5rem', cursor: 'pointer' }}
+                />
+                {uploadPreview && uploadType === 'image' && (
+                  <img src={uploadPreview} alt="Preview" style={styles.preview} />
+                )}
+                {uploadPreview && uploadType === 'video' && (
+                  <video src={uploadPreview} controls style={styles.preview} />
+                )}
+              </div>
+              <div style={styles.field}>
+                <label style={styles.label}>Or paste Media URL</label>
+                <input style={styles.input} name="mediaUrl" placeholder="https://example.com/image.jpg" value={uploadPreview ? '' : form.mediaUrl} onChange={handleChange} disabled={!!uploadPreview} />
               </div>
               <div style={styles.field}>
                 <label style={styles.label}>Description</label>
@@ -129,6 +161,9 @@ export default function Ads() {
           <div style={styles.adsList}>
             {ads.map(ad => (
               <div key={ad.id} style={styles.adCard}>
+                {(ad.media_url || ad.mediaUrl) && (
+                  <img src={ad.media_url || ad.mediaUrl} alt={ad.title} style={styles.adImage} onError={(e) => e.target.style.display='none'} />
+                )}
                 <div style={styles.adInfo}>
                   <h3 style={styles.adTitle}>{ad.title}</h3>
                   <p style={styles.adDesc}>{ad.description}</p>
@@ -168,10 +203,12 @@ const styles = {
   field: { marginBottom: '1rem' },
   label: { display: 'block', color: '#94a3b8', marginBottom: '0.4rem', fontSize: '0.9rem' },
   input: { width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '1rem', boxSizing: 'border-box' },
+  preview: { width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '8px', marginTop: '0.75rem' },
   error: { background: '#dc2626', color: '#fff', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
   emptyState: { textAlign: 'center', padding: '4rem', background: '#1e293b', borderRadius: '12px' },
   adsList: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-  adCard: { background: '#1e293b', borderRadius: '12px', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  adCard: { background: '#1e293b', borderRadius: '12px', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' },
+  adImage: { width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 },
   adInfo: { flex: 1 },
   adTitle: { color: '#fff', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem' },
   adDesc: { color: '#94a3b8', fontSize: '0.9rem', marginBottom: '0.75rem' },
