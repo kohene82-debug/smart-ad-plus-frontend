@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 export default function Ads() {
@@ -8,16 +7,7 @@ export default function Ads() {
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  cconst [form, setForm] = useState({ title: '', description: '', budget: '', targetUrl: '', mediaUrl: '' });onst [form, setForm] = useState({ title: '', description: '', budget: '', targetUrl: '' });<div style={styles.field}>
-  <label style={styles.label}>Media URL (Image or Video link)</label>
-  <input
-    style={styles.input}
-    name="mediaUrl"
-    placeholder="https://example.com/image.jpg"
-    value={form.mediaUrl}
-    onChange={handleChange}
-  />
-</div>
+  const [form, setForm] = useState({ title: '', description: '', budget: '', targetUrl: '', mediaUrl: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,7 +17,7 @@ export default function Ads() {
 
   const fetchAds = async () => {
     try {
-  const res = await api.get('/api/advertiser/ads');
+      const res = await api.get('/api/advertiser/ads');
       setAds(res.data.ads || res.data);
     } catch (err) {
       console.error('Failed to load ads', err);
@@ -45,8 +35,8 @@ export default function Ads() {
     setSubmitting(true);
     setError('');
     try {
-    await api.post('/api/advertiser/createAd', form);
-      setForm({ title: '', description: '', budget: '', targetUrl: '' });
+      await api.post('/api/advertiser/createAd', form);
+      setForm({ title: '', description: '', budget: '', targetUrl: '', mediaUrl: '' });
       setShowForm(false);
       fetchAds();
     } catch (err) {
@@ -59,7 +49,7 @@ export default function Ads() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this ad?')) return;
     try {
-      await api.delete(`/api/ads/${id}`);
+      await api.delete(`/api/advertiser/ads/${id}`);
       setAds(ads.filter(ad => ad.id !== id));
     } catch (err) {
       console.error('Failed to delete ad', err);
@@ -73,8 +63,6 @@ export default function Ads() {
 
   return (
     <div style={styles.container}>
-
-      {/* Sidebar */}
       <div style={styles.sidebar}>
         <h2 style={styles.logo}>Smart Ad+</h2>
         <nav style={styles.nav}>
@@ -85,7 +73,6 @@ export default function Ads() {
         <button onClick={handleLogout} style={styles.logoutBtn}>🚪 Logout</button>
       </div>
 
-      {/* Main Content */}
       <div style={styles.main}>
         <div style={styles.headerRow}>
           <div>
@@ -97,7 +84,6 @@ export default function Ads() {
           </button>
         </div>
 
-        {/* Create Ad Form */}
         {showForm && (
           <div style={styles.formCard}>
             <h2 style={styles.formTitle}>New Ad</h2>
@@ -118,6 +104,10 @@ export default function Ads() {
                 <input style={styles.input} name="targetUrl" placeholder="https://yoursite.com" value={form.targetUrl} onChange={handleChange} required />
               </div>
               <div style={styles.field}>
+                <label style={styles.label}>Media URL (Image or Video link)</label>
+                <input style={styles.input} name="mediaUrl" placeholder="https://example.com/image.jpg" value={form.mediaUrl} onChange={handleChange} />
+              </div>
+              <div style={styles.field}>
                 <label style={styles.label}>Description</label>
                 <textarea style={{ ...styles.input, height: '80px', resize: 'vertical' }} name="description" placeholder="Ad description..." value={form.description} onChange={handleChange} />
               </div>
@@ -128,7 +118,6 @@ export default function Ads() {
           </div>
         )}
 
-        {/* Ads List */}
         {loading ? (
           <p style={{ color: '#94a3b8' }}>Loading ads...</p>
         ) : ads.length === 0 ? (
@@ -144,9 +133,9 @@ export default function Ads() {
                   <h3 style={styles.adTitle}>{ad.title}</h3>
                   <p style={styles.adDesc}>{ad.description}</p>
                   <div style={styles.adMeta}>
-                    <span style={styles.badge}>💰 ${ad.budget}</span>
+                    <span style={styles.badge}>💰 ${ad.budget || ad.total_budget}</span>
                     <span style={{ ...styles.badge, background: ad.status === 'active' ? '#22c55e22' : '#94a3b822', color: ad.status === 'active' ? '#22c55e' : '#94a3b8' }}>
-                      {ad.status === 'active' ? '✅ Active' : '⏸ Inactive'}
+                      {ad.status === 'active' ? '✅ Active' : '⏸ ' + (ad.status || 'Pending')}
                     </span>
                   </div>
                 </div>
